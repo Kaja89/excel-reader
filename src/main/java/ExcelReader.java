@@ -3,17 +3,11 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.*;
 
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Kaja D.
@@ -32,8 +26,9 @@ public class ExcelReader {
         RequiredValuesCreator requiredValuesCreator = new RequiredValuesCreator();
         List<String> requiredValues = requiredValuesCreator.createListOfrequiredValues();
         List<Integer> cellIndexListToIgnore = new ArrayList<>();
+        List<Contract> readedContracts = new ArrayList<>();
 
-        DataFormatter dataFormatter = new DataFormatter();
+        //DataFormatter dataFormatter = new DataFormatter();
 
         for(Sheet sheet: workbook){
             Row row = sheet.getRow(0);
@@ -41,7 +36,6 @@ public class ExcelReader {
             for(Cell cell: row){
                 if(cell.getCellTypeEnum().equals(CellType.STRING)){
                     String cellName = cell.getRichStringCellValue().getString();
-                    //System.out.println(cell.getRichStringCellValue().getString());
                     checkNotRequired(requiredValues, cellIndexListToIgnore, cell, cellName);
                 }
             }
@@ -49,36 +43,16 @@ public class ExcelReader {
             for(Row row1: sheet){
                 if(row1.getRowNum()!=0){
                     Contract contract = fieldsResolver.contractCreator(row1);
-                    System.out.println("NEW CONTRACT CREATED: " + contract.getDateUntil() + " " + contract.getDateFrom() + " " + contract.getSystemInfo() + contract.getAccountingPeriod() + " " +  contract.getTotalCost() + " " + contract.getAccountType() + contract.isActive());
-                    System.out.println("ROW NUMBER: " + row1.getRowNum());
-                    for(Cell cell: row1){
-                        System.out.println("Checking each cell in row...");
-                        int columnIndex = cell.getColumnIndex();
-                        if(cellIndexListToIgnore.contains(columnIndex)){
-                            System.out.println("Found ignored cell");
-                            continue;
-                        } else{
-                            System.out.println("Cell type: " + cell.getCellTypeEnum());
-                            if(cell.getCellTypeEnum().equals(CellType.NUMERIC)){
-                                //Date date = cell.getDateCellValue();
-                                //System.out.println("Ekhem date : " + date);
-                                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                                Date dateToReturn = cell.getDateCellValue();
-
-                                XMLGregorianCalendar cal = DatatypeFactory.newInstance().newXMLGregorianCalendar(dateFormat.format(dateToReturn));
-
-                                LocalDate finalDate = cal.toGregorianCalendar().toZonedDateTime().toLocalDate();
-                                //LocalDate date = cal.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                                System.out.println(finalDate);
-
-                            }
-                            String cellContent = dataFormatter.formatCellValue(cell);
-                            System.out.println(cellContent);
-                        }
+                    Optional<Contract> contractOptional= Optional.ofNullable(contract);
+                    if(contractOptional.isPresent()){
+                        readedContracts.add(contract);
+                        System.out.println("NEW CONTRACT CREATED: " + contract.toString());
                     }
+                    System.out.println("ROW NUMBER: " + row1.getRowNum());
                     System.out.println();
                 }
             }
+            System.out.println("Readed " + readedContracts.size() + " contract/s");
         }
     }
 

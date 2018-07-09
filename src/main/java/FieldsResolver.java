@@ -5,19 +5,19 @@ import org.apache.poi.ss.usermodel.*;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
 
+
 /**
  * @author Kaja D.
  */
 public class FieldsResolver  {
-    //Contract contract = new Contract();
-    private String contractNumber;//id plus year?
+    //create logger
+    private String contractNumber;
     private LocalDate dateFrom;
     private LocalDate dateUntil;
     private double totalCost;
@@ -34,6 +34,8 @@ public class FieldsResolver  {
     int amountTypeNum;
     int amountPeriodNum;
     int activeNum;
+
+    //List<Contract> readedContracts = new ArrayList<>();
 
     public void resolveFields(Row row) throws IOException, InvalidFormatException, DatatypeConfigurationException {
         for(Cell cell:row){
@@ -71,18 +73,14 @@ public class FieldsResolver  {
                 default:
                     System.out.println("Nothing special");
             }
-
         }
-        System.out.println("FROM FIELDS RESOLVER: " + systemNum + " " + orderNum + " " + fromDateNum + " " + toDateNum);
     }
 
     public Contract contractCreator(Row row) throws DatatypeConfigurationException{
+        boolean continueReading = true;
         for(Cell cell: row){
             int cellNum = cell.getColumnIndex();
-//            switch (cellNum){
-//                case systemNum:
-//
-//            }
+
             if(cellNum == systemNum){
                 systemInfo = cell.getStringCellValue();
             }
@@ -90,29 +88,22 @@ public class FieldsResolver  {
                 contractNumber = cell.getStringCellValue();
             }
             if(cellNum == fromDateNum){
-//                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//                Date dateToReturn = cell.getDateCellValue();
-//
-//                XMLGregorianCalendar cal = DatatypeFactory.newInstance().newXMLGregorianCalendar(dateFormat.format(dateToReturn));
 
                 if(cell.getCellTypeEnum().equals(CellType.NUMERIC)){
                     dateFrom = convertToLocalDate(cell);
                 } else{
-                    System.out.println("not numeric data");
+                    continueReading = false;
+                    System.out.println("Date from has not numeric data");
                 }
-
-
-
-                        //= cal.toGregorianCalendar().toZonedDateTime().toLocalDate();
             }
 
             if(cellNum == toDateNum){
                 if(cell.getCellTypeEnum().equals(CellType.NUMERIC)){
                     dateUntil  = convertToLocalDate(cell);
                 } else{
-                    System.out.println("not numeric data");
+                    continueReading = false;
+                    System.out.println("Date until has not numeric data");
                 }
-
             }
 
             if(cellNum == amountNum){
@@ -121,6 +112,7 @@ public class FieldsResolver  {
                     try{
                         totalCost = Double.parseDouble(cell.getStringCellValue());
                     } catch(NumberFormatException e){
+                        continueReading = false;
                         System.out.println(e);
                     }
                 } else {
@@ -146,11 +138,19 @@ public class FieldsResolver  {
                     } else if(booleanValue.equals("false")){
                         active = false;
                     }
+                } else{
+                    System.out.println("Wrong data type");
+                    continueReading = false;
                 }
             }
         }
-        Contract contract = new Contract(contractNumber, dateFrom, dateUntil, totalCost, accountType, accountingPeriod, active, systemInfo);
+
+        if(continueReading){
+            Contract contract = new Contract(contractNumber, dateFrom, dateUntil, totalCost, accountType, accountingPeriod, active, systemInfo);
         return contract;
+        } else {
+            return null;
+        }
     }
 
     public LocalDate convertToLocalDate(Cell cell) throws DatatypeConfigurationException{
@@ -163,7 +163,4 @@ public class FieldsResolver  {
         LocalDate dateToReturn = cal.toGregorianCalendar().toZonedDateTime().toLocalDate();
         return dateToReturn;
     }
-
-
-
 }

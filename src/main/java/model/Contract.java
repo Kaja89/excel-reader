@@ -115,5 +115,19 @@ public class Contract {
     public void setSystemInfo(String systemInfo) {
         this.systemInfo = systemInfo;
     }
+
+    @Override
+    public String toString() {
+        return "Contract{" +
+                "contractNumber='" + contractNumber + '\'' +
+                ", dateFrom=" + dateFrom +
+                ", dateUntil=" + dateUntil +
+                ", totalCost=" + totalCost +
+                ", accountType='" + accountType + '\'' +
+                ", accountingPeriod='" + accountingPeriod + '\'' +
+                ", active=" + active +
+                ", systemInfo='" + systemInfo + '\'' +
+                '}';
+    }
 }
 
